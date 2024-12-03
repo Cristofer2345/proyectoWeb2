@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRUD Reservas</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1 class="text-center">Agregar Reserva</h1>
+
+      <div class="row mb-3">
+        <div class="col-md-8">
+          <input
+            type="text"
+            id="id_reserva"
+            class="form-control"
+            placeholder="Buscar por id destino"
+          />
+        </div>
+        <div class="col-md-4">
+          <button class="btn btn-primary w-100" id="btnBuscar">Buscar</button>
+        </div>
+      </div>
+
+      <!-- Formulario -->
+      <form id="reservaForm" class="mt-4">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <select class="form-select" id="id_cliente">
+              <option selected disable>Cliente</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <select class="form-select" id="id_destino">
+              <option selected disable>Destino</option>
+            </select>
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="dateB" class="form-label">Fecha de Viaje</label>
+            <input type="date" id="fecha_viaje" class="form-control" required />
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="amount" class="form-label">Cantidad de Personas</label>
+            <input
+              type="number"
+              id="cantidad_personas"
+              class="form-control"
+              required
+            />
+          </div>
+        </div>
+        <div class="col-md-6 mb-3">
+          <label for="status" class="form-label">Estado</label>
+          <input type="text" id="estado" class="form-control" required />
+        </div>
+        <button type="button" id="btnAgregar" class="btn btn-primary">
+          Agregar
+        </button>
+        <button type="button" id="btnEditar" class="btn btn-warning" disabled>
+          Editar
+        </button>
+        <button type="button" id="btnEliminar" class="btn btn-danger" disabled>
+          Eliminar
+        </button>
+        <button
+          type="button"
+          id="btnGuardarEditado"
+          class="btn btn-secondary"
+          disabled
+        >
+          Guardar
+        </button>
+      </form>
+
+      <!-- Tabla -->
+      <table class="table table-bordered table-striped mt-4">
+        <thead class="table-dark">
+          <tr>
+            <th>Id</th>
+            <th>Cliente</th>
+            <th>Destino</th>
+            <th>Fecha de Viaje</th>
+            <th>Cantidad de personas</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="tablaReserva">
+          <!-- Datos cargados dinámicamente -->
+        </tbody>
+      </table>
+    </div>
+
+    <script>
+      //objeto reservaSellecionado
+      let reservaSeleccionado = null;
+
+      function cargarReserva() {
+        fetch("http://localhost/ProyectoAPI/controlador/reservaController.php")
+          .then((response) => response.json())
+          .then((reservas) => {
+            const tabla = document.getElementById("tablaReserva");
+            tabla.innerHTML = "";
+
+            reservas.forEach((reservas) => {
+              const fila = document.createElement("tr");
+              fila.innerHTML = `
+              
+                <td>${reservas.id_reserva}</td>
+                <td>${reservas.id_cliente}</td>
+                <td>${reservas.id_destino}</td>
+                <td>${reservas.fecha_viaje}</td>
+                <td>${reservas.cantidad_personas}</td>
+                <td>${reservas.estado}</td>
+              `;
+              fila.addEventListener("click", () =>
+                seleccionarReserva(fila, reservas)
+              );
+              tabla.appendChild(fila);
+            });
+          })
+          .catch((error) => console.error("Error al cargar reservass:", error));
+      }
+
+      function cargarCliente() {
+        fetch("http://localhost/ProyectoAPI/controlador/clienteController.php")
+          .then((response) => response.json())
+          .then((cliente) => {
+            const selectCliente = document.getElementById("id_cliente");
+            selectCliente.innerHTML =
+              "<option disabled selected>Cliente</option>";
+            cliente.forEach((cliente) => {
+              const option = document.createElement("option");
+              option.value = cliente.cedula;
+              option.textContent = cliente.nombre;
+              selectCliente.appendChild(option);
+            });
+          })
+          .catch((error) => console.error("Error al cargar clientes:", error));
+      }
+
+      function cargarDestino() {
+        fetch("http://localhost/ProyectoAPI/controlador/destinoController.php")
+          .then((response) => response.json())
+          .then((destino) => {
+            const selectDestino = document.getElementById("id_destino");
+            selectDestino.innerHTML =
+              "<option disabled selected>Destino</option>";
+            destino.forEach((destino) => {
+              const option = document.createElement("option");
+              option.value = destino.id_destino;
+              option.textContent = destino.nombre; 
+              selectDestino.appendChild(option);
+            });
+          })
+          .catch((error) => console.error("Error al cargar destinos:", error));
+      }
+      document.getElementById("btnAgregar").addEventListener("click", () => {
+        // Obtener los valores del formulario
+        const id_cliente = document.getElementById("id_cliente").value;
+        const id_destino = document.getElementById("id_destino").value;
+        const fecha_viaje = document.getElementById("fecha_viaje").value;
+        const cantidad_personas =
+          document.getElementById("cantidad_personas").value;
+        const estado = document.getElementById("estado").value;
+
+        // Validación básica de campos
+        if (
+          !id_cliente ||
+          !id_destino ||
+          !fecha_viaje ||
+          !cantidad_personas ||
+          !estado
+        ) {
+          alert("Todos los campos son obligatorios.");
+          return;
+        }
+
+        // Crear objeto con los datos de la nueva reserva
+        const nuevoReserva = {
+          id_cliente,
+          id_destino,
+          fecha_viaje,
+          cantidad_personas,
+          estado,
+        };
+
+        // Enviar los datos al servidor usando una solicitud POST
+        fetch(
+          "http://localhost/ProyectoAPI/controlador/reservaController.php",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify(nuevoReserva),
+          }
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.Correcto) {
+              alert("Reserva creado con éxito.");
+              cargarReserva();
+              document.getElementById("reservaForm").reset(); // Limpiamos el formulario
+            } else {
+              Swal.fire({
+                position: "top-center",
+                icon: "success",
+                title: "error al eliminar"+data.Correcto,
+                showConfirmButton: false,
+                timer: 1500,
+              });
+            }
+          })
+          .catch((error) => {
+            console.error("Error al crear la reserva:", error);
+            alert("Error al crear la reserva.");
+          });
+      });
+
+      function seleccionarReserva(fila, reservas) {
+        // Remover selección previa
+        document
+          .querySelectorAll("tr")
+          .forEach((tr) => tr.classList.remove("selected"));
+        fila.classList.add("selected");
+
+        // Guardar reserva seleccionado para futuras acciones
+        reservaSeleccionado = reservas;
+
+        // Habilitar botones
+        document.getElementById("btnEditar").disabled = false;
+        document.getElementById("btnEliminar").disabled = false;
+        document.getElementById("btnAgregar").disabled = true;
+      }
+
+      document
+        .getElementById("btnBuscar")
+        .addEventListener("click", function () {
+          const idBuscar = document.getElementById("id_reserva").value.trim();
+          if (idBuscar === "") {
+            alert("Por favor, ingresa un id correcto.");
+            return;
+          }
+
+          fetch(
+            `http://localhost/ProyectoAPI/controlador/reservaController.php?id_reserva=${idBuscar}`
+          )
+            .then((response) => response.json())
+            .then((reservas) => {
+              const tabla = document.getElementById("tablaReserva");
+              tabla.innerHTML = "";
+              if (reservas.length === 0) {
+                alert("No se encontró reserva con ese id.");
+              } else {
+                reservas.forEach((reservas) => {
+                  const fila = document.createElement("tr");
+                  fila.innerHTML = `
+                <td>${reservas.id_reserva}</td>
+                <td>${reservas.id_cliente}</td>
+                <td>${reservas.id_destino}</td>
+                <td>${reservas.fecha_viaje}</td>
+                 <td>${reservas.cantidad_personas}</td>
+                <td>${reservas.estado}</td>
+               
+              `;
+                  fila.addEventListener("click", () =>
+                    seleccionarReserva(fila, reservas)
+                  );
+                  tabla.appendChild(fila);
+                });
+              }
+            })
+            .catch((error) => console.error("Error al buscar reserva", error));
+        });
+
+      document.addEventListener("DOMContentLoaded", function () {
+        // Realizamos una solicitud GET para obtener los datos de la API
+        cargarCliente();
+        cargarDestino();
+
+        fetch("http://localhost/ProyectoAPI/controlador/reservaController.php")
+          .then((response) => response.json())
+          .then((data) => {
+            console.log("Datos recibidos:", data); // Verifica los datos en la consola
+
+            const tablaReserva = document.getElementById("tablaReserva");
+            tablaReserva.innerHTML = ""; // Limpiar la tabla antes de llenarla
+
+            // Verifica si data es un array
+            if (Array.isArray(data)) {
+              // Iteramos sobre los datos y agregamos cada reserva a la tabla
+              data.forEach((reservas) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+            <td>${reservas.id_reserva}</td>
+            <td>${reservas.id_cliente}</td>
+            <td>${reservas.id_destino}</td>
+            <td>${reservas.fecha_viaje}</td>
+            <td>${reservas.cantidad_personas}</td>
+            <td>${reservas.estado}</td>
+          `;
+                tr.addEventListener("click", () =>
+                  seleccionarReserva(tr, reservas)
+                );
+                tablaReserva.appendChild(tr);
+              });
+            } else {
+              console.error(
+                "Los datos recibidos no son un array válido:",
+                data
+              );
+            }
+          })
+          .catch((error) => {
+            console.error("Error al cargar los datos:", error);
+          });
+      });
+
+      //Para Editar un Registro
+      document.getElementById("btnEditar").addEventListener("click", () => {
+        if (!reservaSeleccionado) return;
+
+        // Mostrar la información del reserva en los campos para edición
+        document.getElementById("id_reserva").disabled = true;
+        document.getElementById("id_cliente").value =
+          reservaSeleccionado.id_cliente;
+        document.getElementById("id_destino").value =
+          reservaSeleccionado.id_destino;
+        document.getElementById("fecha_viaje").value =
+          reservaSeleccionado.fecha_viaje;
+        document.getElementById("cantidad_personas").value =
+          reservaSeleccionado.cantidad_personas;
+        document.getElementById("estado").value = reservaSeleccionado.estado;
+
+        // Habilitar el botón de "Guardar"
+        document.getElementById("btnGuardarEditado").disabled = false;
+      });
+      document
+        .getElementById("btnGuardarEditado")
+        .addEventListener("click", () => {
+          if (!reservaSeleccionado) return;
+
+          // Obtener los valores del formulario
+          const id_reserva = reservaSeleccionado.id_reserva;
+          const id_cliente = document.getElementById("id_cliente").value;
+          const id_destino = document.getElementById("id_destino").value;
+          const fecha_viaje = document.getElementById("fecha_viaje").value;
+          const cantidad_personas =
+            document.getElementById("cantidad_personas").value;
+          const estado = document.getElementById("estado").value;
+          alert("id reserva "+id_reserva);
+          // Validación básica
+          if (
+            !id_reserva ||
+            !id_cliente ||
+            !id_destino ||
+            !fecha_viaje ||
+            !cantidad_personas ||
+            !estado
+          ) {
+            alert("Todos los campos son obligatorios.");
+            return;
+          }
+          const nuevoReserva ={
+            id_reserva,
+            id_cliente,
+            id_destino,
+            fecha_viaje,
+            cantidad_personas,
+            estado
+          }
+
+          // Realizar la solicitud PUT para actualizar el reserva
+          fetch(
+            "http://localhost/ProyectoAPI/controlador/reservaController.php",
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(nuevoReserva) ,
+            }
+          )
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.Correcto) {
+                cargarReserva(); // Recargar tabla
+                document.getElementById("reservaForm").reset();
+                document.getElementById("id_reserva").disabled = false;
+                document.getElementById("btnGuardarEditado").disabled = true;
+                document.getElementById("btnEditar").disabled = true;
+              } else {
+                console.error("Error al guardar el destino:", data.Error);
+                alert("Error al guardar el destino.");
+              }
+            })
+            .catch((error) =>
+              console.error("Error en la solicitud PUT", error)
+            );
+        });
+
+      //Para poder eliminar un registro
+      document.getElementById("btnEliminar").addEventListener("click", () => {
+        if (!reservaSeleccionado) return;
+
+        const datosEliminar = {
+          id_reserva: reservaSeleccionado.id_reserva,
+        };
+
+        // Enviar solicitud DELETE con cuerpo
+        fetch(
+          "http://localhost/ProyectoAPI/controlador/reservaController.php",
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(datosEliminar),
+          }
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.Correcto) {
+              cargarReserva(); // Recargar tabla
+              document.getElementById("reservaForm").reset();
+            } else {
+              console.error("Error al eliminar destino", data.Error);
+              alert("Error al eliminar destino.");
+            }
+          })
+          .catch((error) =>
+            console.error("Error en la solicitud DELETE:", error)
+          );
+      });
+    </script>
+  </body>
+</html>

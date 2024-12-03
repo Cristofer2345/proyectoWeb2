@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reservas</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Bienvenidos</h1>
+      <p>Para hacer una reserva:</p>
+      <div class="uno">
+      <button class="primero" onclick="vistaCliente()">
+        Primero registra un Cliente
+      </button>
+    </div>
+    <div class="dos">
+      <button class="segundo" onclick="vistaDestino()">
+       Segundo registra un Destino
+      </button>
+    </div >
+      <div class="tres">
+      <button class="tercero" onclick="vistaReserva()">
+        Tercero registra la Reserva
+       </button>
+      </div>
+    </div>
+
+    <script>
+        function vistaCliente() {
+            window.location.href = "Cliente.html"; 
+        }
+        function vistaDestino() {
+            window.location.href = "Destino.html"; 
+        }
+        function vistaReserva() {
+            window.location.href = "Reserva.html"; 
+        }
+    </script>
+
+
+  </body>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-image: url('../img/viaje.jpg');
+      background-repeat: no-repeat;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      text-align: center;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      max-width: 600px;
+      height: 600px;
+      width: 100%;
+      
+    }
+
+    h1{
+      font-size: 50px;
+      color: rgb(218, 184, 142);
+    }
+
+    p{
+      font-size: 35px;
+    }
+
+      .primero{
+        width: 370px;
+        height: 60px;
+        font-size: 25px;
+      }
+
+      .segundo{
+        width: 370px;
+        height: 60px;
+        font-size: 25px;
+      }
+
+      .tercero{
+        width: 370px;
+        height: 60px;
+        font-size: 25px;
+      }
+    .primero:hover{
+      background-color: #9cd19e;
+   
+    }
+    .segundo:hover{
+      background-color: #9cd19e;
+    }
+
+    .tercero:hover{
+      background-color: #9cd19e;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 300px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    .modal-content h2 {
+      margin-top: 0;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button.primary {
+      background-color: #007bff;
+      color: white;
+    }
+    button.close {
+      background-color: #dc3545;
+      color: white;
+    }
+    form label {
+      display: block;
+      margin-bottom: 5px;
+      text-align: left;
+    }
+    form input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    div{
+  
+            padding: 15px;
+            margin-bottom: 20px;
+    }
+  </style>
+</html>

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CRUD Destino</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container mt-5">
+      <h1 class="text-center">Agregar Destino</h1>
+
+      <div class="row mb-3">
+        <div class="col-md-8">
+          <input
+            type="text"
+            id="id_destino"
+            class="form-control"
+            placeholder="Buscar por id destino"
+          />
+        </div>
+        <div class="col-md-4">
+          <button class="btn btn-primary w-100" id="btnBuscar">Buscar</button>
+        </div>
+      </div>
+
+      <!-- Formulario -->
+      <form id="destinoForm" class="mt-4">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label for="nombre1" class="form-label">Nombre</label>
+            <input type="text" id="nombre" class="form-control" required />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="country" class="form-label"> Pais</label>
+            <input type="text" id="pais" class="form-control" required />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="description" class="form-label">Descripcion</label>
+            <input type="text" id="descripcion" class="form-control" required />
+          </div>
+          <div class="col-md-6 mb-3">
+            <label for="duration" class="form-label">Semanas</label>
+            <input type="number" id="duracion" class="form-control" required />
+          </div>
+
+          <div class="col-md-6 mb-3">
+            <label for="price" class="form-label">Precio por Persona</label>
+            <input type="number" id="precio_persona" class="form-control" required />
+          </div>
+        </div>
+        <button type="button" id="btnAgregar" class="btn btn-primary">
+          Agregar
+        </button>
+        <button type="button" id="btnEditar" class="btn btn-warning" disabled>
+          Editar
+        </button>
+        <button type="button" id="btnEliminar" class="btn btn-danger" disabled>
+          Eliminar
+        </button>
+        <button
+          type="button"
+          id="btnGuardarEditado"
+          class="btn btn-secondary"
+          disabled
+        >
+          Guardar
+        </button>
+        <p id="mensaje_resultado"></p>
+      </form>
+
+      <!-- Tabla -->
+      <table class="table table-bordered table-striped mt-4">
+        <thead class="table-dark">
+          <tr>
+            <th>Id</th>
+            <th>Nombre</th>
+            <th>País</th>
+            <th>Descripción</th>
+            <th>Semanas</th>
+            <th>Precio por Persona</th>
+          </tr>
+        </thead>
+        <tbody id="tablaDestino">
+          <!-- Datos cargados dinámicamente -->
+        </tbody>
+      </table>
+    </div>
+
+    <script>
+      //objeto destinoSellecionado
+      let destinoSeleccionado = null;
+
+      function cargarDestino() {
+        fetch("http://localhost/ProyectoAPI/controlador/destinoController.php")
+          .then((response) => response.json())
+          .then((destino) => {
+            const tabla = document.getElementById("tablaDestino");
+            tabla.innerHTML = "";
+
+            destino.forEach((destino) => {
+              const fila = document.createElement("tr");
+              fila.innerHTML = `
+              <td>${destino.id_destino}</td>
+                <td>${destino.nombre}</td>
+                <td>${destino.pais}</td>
+                <td>${destino.descripcion}</td>
+                <td>${destino.duracion}</td>
+                <td>${destino.precio_persona}</td>
+              `;
+              fila.addEventListener("click", () =>
+                seleccionarDestino(fila, destino)
+              );
+              tabla.appendChild(fila);
+            });
+          })
+          .catch((error) => console.error("Error al cargar destino:", error));
+      }
+     
+
+     // Crear un nuevo destino
+     document.getElementById("btnAgregar").addEventListener("click", () => {
+        // Obtener los valores del formulario
+        const nombre = document.getElementById("nombre").value;
+        const pais = document.getElementById("pais").value;
+        const descripcion= document.getElementById("descripcion").value;
+        const duracion = document.getElementById("duracion").value;
+        const precio_persona = document.getElementById("precio_persona").value;
+
+        // Validación básica de campos
+        if (!nombre || !pais|| !descripcion || !duracion||!precio_persona) {
+          alert("Todos los campos son obligatorios.");
+          return;
+        }
+
+        // Crear objeto con los datos del nuevo destino
+        const nuevoDestino = {
+          nombre,
+          pais,
+          descripcion,
+          duracion,
+          precio_persona
+        };
+
+        // Enviar los datos al servidor usando una solicitud POST
+        fetch(
+          "http://localhost/ProyectoAPI/controlador/destinoController.php",
+          {
+            method: "POST", 
+            headers: {
+              "Content-Type": "application/json", 
+            },
+            body:JSON.stringify(nuevoDestino), 
+          }
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.Correcto) {
+              alert("Destino creado con éxito.");
+              cargarDestino();
+              document.getElementById("destinoForm").reset(); // Limpiamos el formulario
+            } else {
+              alert("Error al crear el destino.");
+            }
+          })
+          .catch((error) => {
+            console.error("Error al crear destino:", error);
+            alert("Error al crear el destino.");
+          });
+      });
+
+
+      function seleccionarDestino(fila, destino) {
+        // Remover selección previa
+        document
+          .querySelectorAll("tr")
+          .forEach((tr) => tr.classList.remove("selected"));
+        fila.classList.add("selected");
+
+        // Guardar destino seleccionado para futuras acciones
+        destinoSeleccionado = destino;
+
+        // Habilitar botones
+        document.getElementById("btnEditar").disabled = false;
+        document.getElementById("btnEliminar").disabled = false;
+        document.getElementById("btnAgregar").disabled = true;
+      }
+
+      document.getElementById("btnBuscar").addEventListener("click", function () {
+      const idBuscar = document.getElementById("id_destino").value.trim();
+      if (idBuscar === "") {
+        alert("Por favor, ingresa un id correcto.");
+        return;
+      }
+
+      fetch(`http://localhost/ProyectoAPI/controlador/destinoController.php?id_destino=${idBuscar}`)
+        .then(response => response.json())
+        .then(destino=> {
+          const tabla = document.getElementById("tablaDestino");
+          tabla.innerHTML = "";
+          if (destino.length === 0) {
+            alert("No se encontró destino con ese destino.");
+          } else {
+            destino.forEach(destino => {
+              const fila = document.createElement("tr");
+              fila.innerHTML = `
+                <td>${destino.id_destino}</td>
+                <td>${destino.nombre}</td>
+                <td>${destino.pais}</td>
+                <td>${destino.descripcion}</td>
+                <td>${destino.duracion}</td>
+                <td>${destino.precio_persona}</td>
+              `;
+              fila.addEventListener("click", () => seleccionarDestino(fila, destino));
+              tabla.appendChild(fila);
+            });
+          }
+        })
+        .catch(error => console.error("Error al buscar destino:", error));
+    });
+
+      document.addEventListener("DOMContentLoaded", function () {
+        // Realizamos una solicitud GET para obtener los datos de la API
+        fetch("http://localhost/ProyectoAPI/controlador/destinoController.php")
+          .then((response) => response.json())
+          .then((data) => {
+            const tablaDestino = document.getElementById("tablaDestino");
+            tablaDestino.innerHTML = ""; // Limpiar la tabla antes de llenarla
+
+            // Iteramos sobre los datos y agregamos cada destino a la tabla
+            data.forEach((destino) => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                          <td>${destino.id_destino}</td>
+                          <td>${destino.nombre}</td>
+                          <td>${destino.pais}</td>
+                          <td>${destino.descripcion}</td>
+                          <td>${destino.duracion}</td>
+                          <td>${destino.precio_persona}</td>
+                      `;
+              tr.addEventListener("click", () =>
+                seleccionarDestino(tr, destino)
+              );
+              tablaDestino.appendChild(tr);
+            });
+          })
+          .catch((error) => {
+            console.error("Error al cargar los datos:", error);
+          });
+      });
+
+       
+
+      //Para Editar un Registro
+      document.getElementById("btnEditar").addEventListener("click", () => {
+        if (!destinoSeleccionado) return;
+
+        // Mostrar la información del destino en los campos para edición
+        document.getElementById("id_destino").disabled = true; // La cédula no puede ser editada
+        document.getElementById("nombre").value = destinoSeleccionado.nombre;
+        document.getElementById("pais").value =
+          destinoSeleccionado.pais;
+        document.getElementById("descripcion").value =
+          destinoSeleccionado.descripcion;
+        document.getElementById("duracion").value = destinoSeleccionado.duracion;
+        document.getElementById("id_destino").value = destinoSeleccionado.id_destino;
+
+        // Habilitar el botón de "Guardar"
+        document.getElementById("btnGuardarEditado").disabled = false;
+      });
+      document
+        .getElementById("btnGuardarEditado")
+        .addEventListener("click", () => {
+          if (!destinoSeleccionado) return;
+
+          // Obtener los valores del formulario
+          const id_destino = destinoSeleccionado.id_destino;
+          const nombre = document.getElementById("nombre").value;
+          const pais = document.getElementById("pais").value;
+          const descripcion = document.getElementById("descripcion").value;
+          const duracion = document.getElementById("duracion").value;
+          const precio_persona = document.getElementById("precio_persona").value;
+
+          // Validación básica
+          if (!nombre || !pais || !descripcion || !duracion||!precio_persona) {
+            alert("Todos los campos son obligatorios.");
+            return;
+          }
+
+          // Realizar la solicitud PUT para actualizar el destino
+          fetch(
+            "http://localhost/ProyectoAPI/controlador/destinoController.php",
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                id_destino,
+                nombre,
+                pais,
+                descripcion,
+                duracion,
+                precio_persona
+              }),
+            }
+          )
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.Correcto) {
+              cargarDestino(); // Recargar tabla
+              document.getElementById("destinoForm").reset();
+              document.getElementById("id_destino").disabled = false;
+              document.getElementById("btnGuardarEditado").disabled = true;
+              document.getElementById("btnEditar").disabled = true;
+            } else {
+              console.error("Error al guardar el destino:", data.Error);
+              alert("Error al guardar el destino.");
+            }
+          })
+          .catch((error) =>
+            console.error("Error en la solicitud PUT", error)
+          );
+        });
+
+      //Para poder eliminar un registro
+      document.getElementById("btnEliminar").addEventListener("click", () => {
+        if (!destinoSeleccionado) return;
+
+        // Preparar los datos para eliminar (en este caso la cédula)
+        const datosEliminar = {
+          id_destino: destinoSeleccionado.id_destino,
+        };
+
+        // Enviar solicitud DELETE con cuerpo
+        fetch(
+          "http://localhost/ProyectoAPI/controlador/destinoController.php",
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(datosEliminar),
+          }
+        )
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.Correcto) {
+              cargarDestino(); // Recargar tabla
+              document.getElementById("destinoForm").reset();
+            } else {
+              console.error("Error al eliminar destino", data.Error);
+              alert("Error al eliminar destino.");
+            }
+          })
+          .catch((error) =>
+            console.error("Error en la solicitud DELETE:", error)
+          );
+      });
+    </script>
+  </body>
+</html>
